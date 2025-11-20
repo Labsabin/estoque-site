@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema Completo de Estoque</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #4b67ff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 900px;
+      margin: 25px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+    input,
+    select,
+    button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4b67ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #314dff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th,
+    td {
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      background: #4b67ff;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #eeeeee;
+    }
+    .danger {
+      background: #ff8c8c !important;
+      font-weight: bold;
+    }
+    .warning {
+      background: #fff4a3 !important;
+      font-weight: bold;
+    }
+    .btn-remove {
+      background: red;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+    #loginBox {
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      text-align: center;
+    }
+    #relatorio {
+      display: none;
+      background: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      overflow: auto;
+      box-sizing: border-box;
+      z-index: 9999;
+    }
+    #relatorio table {
+      border: 1px solid #333;
+    }
+    #relatorio button {
+      width: auto;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginBox">
+    <h2>Login</h2>
+    <input id="loginSenha" type="password" placeholder="Digite a senha" />
+    <button onclick="fazerLogin()">Entrar</button>
+  </div>
+
+  <div class="container" id="conteudoSistema">
+    <header>
+      <h1>Sistema Completo de Estoque</h1>
+      <p>Controle tudo de forma simples e automática</p>
+    </header>
+
+    <h2>Adicionar Produto</h2>
+    <input type="text" id="nome" placeholder="Nome do produto" />
+    <input type="number" id="quantidade" placeholder="Quantidade" />
+    <input type="number" id="minimo" placeholder="Quantidade mínima (opcional)" />
+    <input type="text" id="categoria" placeholder="Categoria (opcional)" />
+    <input type="date" id="validade" placeholder="Data de validade" />
+    <input type="text" id="entrada" placeholder="De onde veio (entrada)" />
+    <input type="text" id="saida" placeholder="Para onde vai (saída)" />
+    <button onclick="adicionarProduto()">Adicionar Produto</button>
+
+    <h2>Buscar Produto</h2>
+    <input
+      type="text"
+      id="busca"
+      placeholder="Digite para buscar..."
+      oninput="render()"
+    />
+
+    <button onclick="abrirRelatorio()">Abrir Relatório</button>
+    <button onclick="exportarExcel()">Exportar Estoque para Excel</button>
+
+    <h2>Estoque Atual</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Qtd</th>
+          <th>Qtd Mínima</th>
+          <th>Categoria</th>
+          <th>Validade</th>
+          <th>Entrada</th>
+          <th>Saída</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela"></tbody>
+    </table>
+  </div>
+
+  <div id="relatorio">
+    <h2>Relatório do Estoque</h2>
+    <button onclick="window.print()">Imprimir / Gerar PDF</button>
+    <button onclick="fecharRelatorio()">Fechar</button>
+
+    <h3>Total de itens na casa:</h3>
+    <p id="totalItens"></p>
+
+    <h3>Total enviado por unidade:</h3>
+    <div id="relatorioUnidades"></div>
+
+    <h3>Lista Completa:</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Qtd</th>
+          <th>Saída (Unidade)</th>
+        </tr>
+      </thead>
+      <tbody id="listaRelatorio"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const senhaSistema = localStorage.getItem("senhaSistema") || "1234";
+
+    function fazerLogin() {
+      const s = document.getElementById("loginSenha").value;
+      if (s === senhaSistema) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("conteudoSistema").style.display = "block";
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    let estoque = JSON.parse(localStorage.getItem("estoqueCompleto")) || [];
+
+    function salvar() {
+      localStorage.setItem("estoqueCompleto", JSON.stringify(estoque));
+    }
+
+    function adicionarProduto() {
+      const nome = document.getElementById("nome").value.trim();
+      const quantidade = parseInt(document.getElementById("quantidade").value);
+      const minimo = parseInt(document.getElementById("minimo").value) || 0;
+      const categoria = document.getElementById("categoria").value.trim();
+      const validade = document.getElementById("validade").value;
+      const entrada = document.getElementById("entrada").value.trim();
+      const saida = document.getElementById("saida").value.trim();
+
+      if (!nome || !quantidade || !validade) {
+        alert("Preencha pelo menos: nome, quantidade e validade");
+        return;
+      }
+
+      estoque.push({
+        nome,
+        quantidade,
+        minimo,
+        categoria,
+        validade,
+        entrada,
+        saida,
+      });
+
+      salvar();
+      render();
+
+      document.querySelectorAll("input").forEach((i) => (i.value = ""));
+    }
+
+    function atualizarQuantidade(index, novaQtd) {
+      estoque[index].quantidade = parseInt(novaQtd);
+      salvar();
+      render();
+    }
+
+    function remover(index) {
+      estoque.splice(index, 1);
+      salvar();
+      render();
+    }
+
+    function exportarExcel() {
+      if (estoque.length === 0) {
+        alert("Estoque vazio para exportar!");
+        return;
+      }
+      const dados = estoque.map((item) => ({
+        Produto: item.nome,
+        Quantidade: item.quantidade,
+        "Qtd Mínima": item.minimo,
+        Categoria: item.categoria,
+        Validade: item.validade,
+        Entrada: item.entrada,
+        Saída: item.saida,
+      }));
+
+      const csv = [
+        Object.keys(dados[0]).join(","),
+        ...dados.map((obj) =>
+          Object.values(obj)
+            .map((v) => `"${v}"`)
+            .join(",")
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "estoque.csv";
+      link.click();
+    }
+
+    function verificarStatus(validade, qtd, minimo) {
+      const hoje = new Date();
+      const dataVal = new Date(validade);
+      const diff = (dataVal - hoje) / (1000 * 60 * 60 * 24);
+
+      if (diff < 0) return "danger"; // vencido
+      if (diff <= 7) return "warning"; // vencendo
+      if (qtd <= minimo && minimo > 0) return "warning"; // abaixo do mínimo
+      return "";
+    }
+
+    function render() {
+      const busca = document.getElementById("busca").value.toLowerCase();
+      const tabela = document.getElementById("tabela");
+      tabela.innerHTML = "";
+
+      estoque
+        .filter((item) => item.nome.toLowerCase().includes(busca))
+        .forEach((item, index) => {
+          const classe = verificarStatus(item.validade, item.quantidade, item.minimo);
+
+          tabela.innerHTML += `
+            <tr class="${classe}">
+              <td>${item.nome}</td>
+              <td>
+                <input type="number" value="${item.quantidade}" onchange="atualizarQuantidade(${index}, this.value)" />
+              </td>
+              <td>${item.minimo}</td>
+              <td>${item.categoria || "-"}</td>
+              <td>${item.validade}</td>
+              <td>${item.entrada || "-"}</td>
+              <td>${item.saida || "-"}</td>
+              <td>
+                <button class="btn-remove" onclick="remover(${index})">Remover</button>
+              </td>
+            </tr>
+          `;
+        });
+    }
+
+    function abrirRelatorio() {
+      document.getElementById("relatorio").style.display = "block";
+
+      const total = estoque.reduce((acc, item) => acc + item.quantidade, 0);
+      document.getElementById("totalItens").textContent = total + " itens";
+
+      const unidades = {};
+      estoque.forEach((item) => {
+        const uni = item.saida || "Não enviado";
+        if (!unidades[uni]) unidades[uni] = 0;
+        unidades[uni] += item.quantidade;
+      });
+
+      let html = "";
+      for (const u in unidades) {
+        html += `<p><strong>${u}:</strong> ${unidades[u]} itens enviados</p>`;
+      }
+      document.getElementById("relatorioUnidades").innerHTML = html;
+
+      let linhas = "";
+      estoque.forEach((item) => {
+        linhas += `
+          <tr>
+            <td>${item.nome}</td>
+            <td>${item.quantidade}</td>
+            <td>${item.saida || "-"}</td>
+          </tr>
+        `;
+      });
+      document.getElementById("listaRelatorio").innerHTML = linhas;
+    }
+
+    function fecharRelatorio() {
+      document.getElementById("relatorio").style.display = "none";
+    }
+
+    window.onload = () => {
+      document.getElementById("loginBox").style.display = "block";
+      document.getElementById("conteudoSistema").style.display = "none";
+    };
+  </script>
+</body>
+</html>
