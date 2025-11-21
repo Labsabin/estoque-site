@@ -203,6 +203,12 @@
         let usuariosPendentes = JSON.parse(localStorage.getItem('usuariosPendentes')) || []; // Array de {usuario, senha}
         let usuarioLogado = localStorage.getItem('usuarioLogado');
 
+        // Inicializar master se não existir
+        if (usuariosAprovados.length === 0) {
+            usuariosAprovados.push({ usuario: 'anacarol', senha: '1010', master: true });
+            localStorage.setItem('usuariosAprovados', JSON.stringify(usuariosAprovados));
+        }
+
         // Verificar login ao carregar
         window.onload = function() {
             if (usuarioLogado) {
@@ -377,7 +383,4 @@
         // Salvar dados
         function salvarDados() {
             localStorage.setItem('inventario', JSON.stringify(inventario));
-            localStorage.setItem('movimentacoes', JSON.stringify(movimentacoes));
-        }
-
-        // Gerar relatório
+            localStorage.setItem('mov
