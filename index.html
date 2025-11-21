@@ -1,359 +1,333 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sistema Completo de Estoque</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #4b67ff;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    .container {
-      max-width: 900px;
-      margin: 25px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      display: none;
-    }
-    input,
-    select,
-    button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      background: #4b67ff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #314dff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th,
-    td {
-      padding: 10px;
-      text-align: left;
-      vertical-align: middle;
-    }
-    th {
-      background: #4b67ff;
-      color: white;
-    }
-    tr:nth-child(even) {
-      background: #eeeeee;
-    }
-    .danger {
-      background: #ff8c8c !important;
-      font-weight: bold;
-    }
-    .warning {
-      background: #fff4a3 !important;
-      font-weight: bold;
-    }
-    .btn-remove {
-      background: red;
-      padding: 5px 10px;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-    }
-    #loginBox {
-      max-width: 400px;
-      margin: 50px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 10px;
-      text-align: center;
-    }
-    #relatorio {
-      display: none;
-      background: white;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      padding: 20px;
-      overflow: auto;
-      box-sizing: border-box;
-      z-index: 9999;
-    }
-    #relatorio table {
-      border: 1px solid #333;
-    }
-    #relatorio button {
-      width: auto;
-      margin-right: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Estoque - Laboratório</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .alert { margin-top: 10px; }
+    </style>
 </head>
 <body>
-  <div id="loginBox">
-    <h2>Login</h2>
-    <input id="loginSenha" type="password" placeholder="Digite a senha" />
-    <button onclick="fazerLogin()">Entrar</button>
-  </div>
+    <div class="container mt-5">
+        <h1 class="text-center">Sistema de Gestão de Estoque - Laboratório</h1>
+        
+        <!-- Abas -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="gestao-tab" data-bs-toggle="tab" data-bs-target="#gestao" type="button" role="tab" aria-controls="gestao" aria-selected="true">Gestão</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="relatorios-tab" data-bs-toggle="tab" data-bs-target="#relatorios" type="button" role="tab" aria-controls="relatorios" aria-selected="false">Relatórios</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- Aba Gestão -->
+            <div class="tab-pane fade show active" id="gestao" role="tabpanel" aria-labelledby="gestao-tab">
+                <!-- Gestão de Entrada -->
+                <div class="card mt-4">
+                    <div class="card-header">Adicionar Material Recebido</div>
+                    <div class="card-body">
+                        <form id="form-entrada">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Nome do Material</label>
+                                    <input type="text" class="form-control" id="material-entrada" placeholder="Digite o nome" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Quantidade</label>
+                                    <input type="number" class="form-control" id="quantidade-entrada" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Fornecedor</label>
+                                    <input type="text" class="form-control" id="fornecedor-entrada" placeholder="Digite o fornecedor" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Data Recebimento</label>
+                                    <input type="date" class="form-control" id="data-recebimento" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Data Validade</label>
+                                    <input type="date" class="form-control" id="data-validade" required>
+                                </div>
+                                <div class="col-md-1">
+                                    <label>Min. Estoque</label>
+                                    <input type="number" class="form-control" id="min-estoque" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-3">Adicionar</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Distribuição -->
+                <div class="card mt-4">
+                    <div class="card-header">Distribuir Material</div>
+                    <div class="card-body">
+                        <form id="form-distribuicao">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Nome do Material</label>
+                                    <input type="text" class="form-control" id="material-distribuicao" placeholder="Digite o nome" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Quantidade Retirada</label>
+                                    <input type="number" class="form-control" id="quantidade-retirada" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Data Saída</label>
+                                    <input type="date" class="form-control" id="data-saida" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Para Onde</label>
+                                    <input type="text" class="form-control" id="destino" placeholder="Digite o destino" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Quem Está Enviando</label>
+                                    <input type="text" class="form-control" id="quem-enviando" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-warning mt-3">Distribuir</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Inventário -->
+                <div class="card mt-4">
+                    <div class="card-header">Inventário Atual</div>
+                    <div class="card-body">
+                        <table class="table table-striped" id="tabela-inventario">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Quantidade</th>
+                                    <th>Fornecedor</th>
+                                    <th>Data Recebimento</th>
+                                    <th>Data Validade</th>
+                                    <th>Min. Estoque</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Alertas -->
+                <div class="card mt-4">
+                    <div class="card-header">Alertas: Materiais Acabando</div>
+                    <div class="card-body" id="alertas"></div>
+                </div>
+            </div>
+            
+            <!-- Aba Relatórios -->
+            <div class="tab-pane fade" id="relatorios" role="tabpanel" aria-labelledby="relatorios-tab">
+                <div class="card mt-4">
+                    <div class="card-header">Gerar Relatórios em PDF (Tabelas Detalhadas)</div>
+                    <div class="card-body">
+                        <button class="btn btn-success mb-2" onclick="gerarRelatorioMovimentacao()">Relatório Completo de Movimentações (Entradas e Saídas)</button><br>
+                        <button class="btn btn-info mb-2" onclick="gerarRelatorioEstoque()">Relatório do Inventário Atual</button><br>
+                        <button class="btn btn-warning mb-2" onclick="gerarRelatorioRecebidosMes()">Relatório de Recebidos no Mês</button><br>
+                        <div class="mb-2">
+                            <label>Escolher Localidade para Relatório de Retirados:</label>
+                            <select class="form-control" id="select-localidade" style="width: 200px; display: inline-block;">
+                                <option value="">Selecione uma localidade</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-danger" onclick="gerarRelatorioRetiradosLocalidade()">Relatório de Retirados por Localidade Selecionada</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <div class="container" id="conteudoSistema">
-    <header>
-      <h1>Sistema Completo de Estoque</h1>
-      <p>Controle tudo de forma simples e automática</p>
-    </header>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dados simulados (localStorage)
+        let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
+        let movimentacoes = JSON.parse(localStorage.getItem('movimentacoes')) || [];
 
-    <h2>Adicionar Produto</h2>
-    <input type="text" id="nome" placeholder="Nome do produto" />
-    <input type="number" id="quantidade" placeholder="Quantidade" />
-    <input type="number" id="minimo" placeholder="Quantidade mínima (opcional)" />
-    <input type="text" id="categoria" placeholder="Categoria (opcional)" />
-    <input type="date" id="validade" placeholder="Data de validade" />
-    <input type="text" id="entrada" placeholder="De onde veio (entrada)" />
-    <input type="text" id="saida" placeholder="Para onde vai (saída)" />
-    <button onclick="adicionarProduto()">Adicionar Produto</button>
+        // Carregar inventário na tabela
+        function carregarInventario() {
+            const tbody = document.querySelector('#tabela-inventario tbody');
+            tbody.innerHTML = '';
+            inventario.forEach(item => {
+                tbody.innerHTML += `<tr>
+                    <td>${item.material}</td>
+                    <td>${item.quantidade}</td>
+                    <td>${item.fornecedor}</td>
+                    <td>${item.dataRecebimento}</td>
+                    <td>${item.dataValidade}</td>
+                    <td>${item.minEstoque}</td>
+                </tr>`;
+            });
+            carregarAlertas();
+            carregarLocalidades();
+        }
 
-    <h2>Buscar Produto</h2>
-    <input
-      type="text"
-      id="busca"
-      placeholder="Digite para buscar..."
-      oninput="render()"
-    />
+        // Carregar alertas
+        function carregarAlertas() {
+            const alertasDiv = document.getElementById('alertas');
+            alertasDiv.innerHTML = '';
+            inventario.forEach(item => {
+                if (item.quantidade <= item.minEstoque) {
+                    alertasDiv.innerHTML += `<div class="alert alert-danger">Alerta: ${item.material} está acabando (Quantidade: ${item.quantidade})</div>`;
+                }
+            });
+        }
 
-    <button onclick="abrirRelatorio()">Abrir Relatório</button>
-    <button onclick="exportarExcel()">Exportar Estoque para Excel</button>
+        // Carregar localidades no select
+        function carregarLocalidades() {
+            const select = document.getElementById('select-localidade');
+            select.innerHTML = '<option value="">Selecione uma localidade</option>';
+            const localidades = [...new Set(movimentacoes.filter(mov => mov.tipo === 'Saída').map(mov => mov.destino))];
+            localidades.forEach(local => {
+                select.innerHTML += `<option value="${local}">${local}</option>`;
+            });
+        }
 
-    <h2>Estoque Atual</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Produto</th>
-          <th>Qtd</th>
-          <th>Qtd Mínima</th>
-          <th>Categoria</th>
-          <th>Validade</th>
-          <th>Entrada</th>
-          <th>Saída</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabela"></tbody>
-    </table>
-  </div>
+        // Formulário de entrada
+        document.getElementById('form-entrada').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const material = document.getElementById('material-entrada').value.trim();
+            const quantidade = parseInt(document.getElementById('quantidade-entrada').value);
+            const fornecedor = document.getElementById('fornecedor-entrada').value.trim();
+            const dataRecebimento = document.getElementById('data-recebimento').value;
+            const dataValidade = document.getElementById('data-validade').value;
+            const minEstoque = parseInt(document.getElementById('min-estoque').value);
 
-  <div id="relatorio">
-    <h2>Relatório do Estoque</h2>
-    <button onclick="window.print()">Imprimir / Gerar PDF</button>
-    <button onclick="fecharRelatorio()">Fechar</button>
-
-    <h3>Total de itens na casa:</h3>
-    <p id="totalItens"></p>
-
-    <h3>Total enviado por unidade:</h3>
-    <div id="relatorioUnidades"></div>
-
-    <h3>Lista Completa:</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Produto</th>
-          <th>Qtd</th>
-          <th>Saída (Unidade)</th>
-        </tr>
-      </thead>
-      <tbody id="listaRelatorio"></tbody>
-    </table>
-  </div>
-
-  <script>
-    const senhaSistema = localStorage.getItem("senhaSistema") || "1234";
-
-    function fazerLogin() {
-      const s = document.getElementById("loginSenha").value;
-      if (s === senhaSistema) {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("conteudoSistema").style.display = "block";
-      } else {
-        alert("Senha incorreta!");
-      }
-    }
-
-    let estoque = JSON.parse(localStorage.getItem("estoqueCompleto")) || [];
-
-    function salvar() {
-      localStorage.setItem("estoqueCompleto", JSON.stringify(estoque));
-    }
-
-    function adicionarProduto() {
-      const nome = document.getElementById("nome").value.trim();
-      const quantidade = parseInt(document.getElementById("quantidade").value);
-      const minimo = parseInt(document.getElementById("minimo").value) || 0;
-      const categoria = document.getElementById("categoria").value.trim();
-      const validade = document.getElementById("validade").value;
-      const entrada = document.getElementById("entrada").value.trim();
-      const saida = document.getElementById("saida").value.trim();
-
-      if (!nome || !quantidade || !validade) {
-        alert("Preencha pelo menos: nome, quantidade e validade");
-        return;
-      }
-
-      estoque.push({
-        nome,
-        quantidade,
-        minimo,
-        categoria,
-        validade,
-        entrada,
-        saida,
-      });
-
-      salvar();
-      render();
-
-      document.querySelectorAll("input").forEach((i) => (i.value = ""));
-    }
-
-    function atualizarQuantidade(index, novaQtd) {
-      estoque[index].quantidade = parseInt(novaQtd);
-      salvar();
-      render();
-    }
-
-    function remover(index) {
-      estoque.splice(index, 1);
-      salvar();
-      render();
-    }
-
-    function exportarExcel() {
-      if (estoque.length === 0) {
-        alert("Estoque vazio para exportar!");
-        return;
-      }
-      const dados = estoque.map((item) => ({
-        Produto: item.nome,
-        Quantidade: item.quantidade,
-        "Qtd Mínima": item.minimo,
-        Categoria: item.categoria,
-        Validade: item.validade,
-        Entrada: item.entrada,
-        Saída: item.saida,
-      }));
-
-      const csv = [
-        Object.keys(dados[0]).join(","),
-        ...dados.map((obj) =>
-          Object.values(obj)
-            .map((v) => `"${v}"`)
-            .join(",")
-        ),
-      ].join("\n");
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "estoque.csv";
-      link.click();
-    }
-
-    function verificarStatus(validade, qtd, minimo) {
-      const hoje = new Date();
-      const dataVal = new Date(validade);
-      const diff = (dataVal - hoje) / (1000 * 60 * 60 * 24);
-
-      if (diff < 0) return "danger"; // vencido
-      if (diff <= 7) return "warning"; // vencendo
-      if (qtd <= minimo && minimo > 0) return "warning"; // abaixo do mínimo
-      return "";
-    }
-
-    function render() {
-      const busca = document.getElementById("busca").value.toLowerCase();
-      const tabela = document.getElementById("tabela");
-      tabela.innerHTML = "";
-
-      estoque
-        .filter((item) => item.nome.toLowerCase().includes(busca))
-        .forEach((item, index) => {
-          const classe = verificarStatus(item.validade, item.quantidade, item.minimo);
-
-          tabela.innerHTML += `
-            <tr class="${classe}">
-              <td>${item.nome}</td>
-              <td>
-                <input type="number" value="${item.quantidade}" onchange="atualizarQuantidade(${index}, this.value)" />
-              </td>
-              <td>${item.minimo}</td>
-              <td>${item.categoria || "-"}</td>
-              <td>${item.validade}</td>
-              <td>${item.entrada || "-"}</td>
-              <td>${item.saida || "-"}</td>
-              <td>
-                <button class="btn-remove" onclick="remover(${index})">Remover</button>
-              </td>
-            </tr>
-          `;
+            let item = inventario.find(i => i.material === material);
+            if (item) {
+                item.quantidade += quantidade;
+            } else {
+                inventario.push({ material, quantidade, fornecedor, dataRecebimento, dataValidade, minEstoque });
+            }
+            movimentacoes.push({ tipo: 'Entrada', material, quantidade, data: dataRecebimento, fornecedor });
+            salvarDados();
+            carregarInventario();
+            this.reset();
         });
-    }
 
-    function abrirRelatorio() {
-      document.getElementById("relatorio").style.display = "block";
+        // Formulário de distribuição
+        document.getElementById('form-distribuicao').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const material = document.getElementById('material-distribuicao').value.trim();
+            const quantidade = parseInt(document.getElementById('quantidade-retirada').value);
+            const dataSaida = document.getElementById('data-saida').value;
+            const destino = document.getElementById('destino').value.trim();
+            const quem = document.getElementById('quem-enviando').value.trim();
 
-      const total = estoque.reduce((acc, item) => acc + item.quantidade, 0);
-      document.getElementById("totalItens").textContent = total + " itens";
+            let item = inventario.find(i => i.material === material);
+            if (item && item.quantidade >= quantidade) {
+                item.quantidade -= quantidade;
+                movimentacoes.push({ tipo: 'Saída', material, quantidade, data: dataSaida, destino, quem });
+                salvarDados();
+                carregarInventario();
+                this.reset();
+            } else {
+                alert('Quantidade insuficiente ou material não encontrado!');
+            }
+        });
 
-      const unidades = {};
-      estoque.forEach((item) => {
-        const uni = item.saida || "Não enviado";
-        if (!unidades[uni]) unidades[uni] = 0;
-        unidades[uni] += item.quantidade;
-      });
+        // Salvar dados
+        function salvarDados() {
+            localStorage.setItem('inventario', JSON.stringify(inventario));
+            localStorage.setItem('movimentacoes', JSON.stringify(movimentacoes));
+        }
 
-      let html = "";
-      for (const u in unidades) {
-        html += `<p><strong>${u}:</strong> ${unidades[u]} itens enviados</p>`;
-      }
-      document.getElementById("relatorioUnidades").innerHTML = html;
+        // Gerar relatório completo de movimentações (PDF com tabela)
+        function gerarRelatorioMovimentacao() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Relatório Completo de Movimentações', 10, 10);
+            const body = movimentacoes.map(mov => [
+                mov.tipo,
+                mov.material,
+                mov.quantidade,
+                mov.data,
+                mov.fornecedor || `${mov.destino} (Enviado por: ${mov.quem})`
+            ]);
+            doc.autoTable({
+                head: [['Tipo', 'Material', 'Quantidade', 'Data', 'Detalhes']],
+                body: body,
+                startY: 20
+            });
+            doc.save('relatorio_movimentacoes_completo.pdf');
+        }
 
-      let linhas = "";
-      estoque.forEach((item) => {
-        linhas += `
-          <tr>
-            <td>${item.nome}</td>
-            <td>${item.quantidade}</td>
-            <td>${item.saida || "-"}</td>
-          </tr>
-        `;
-      });
-      document.getElementById("listaRelatorio").innerHTML = linhas;
-    }
+        // Gerar relatório de estoque (PDF com tabela)
+        function gerarRelatorioEstoque() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Relatório do Inventário Atual', 10, 10);
+            const body = inventario.map(item => [
+                item.material,
+                item.quantidade,
+                item.fornecedor,
+                item.dataRecebimento,
+                item.dataValidade,
+                item.minEstoque
+            ]);
+            doc.autoTable({
+                head: [['Material', 'Quantidade', 'Fornecedor', 'Data Recebimento', 'Data Validade', 'Min. Estoque']],
+                body: body,
+                startY: 20
+            });
+            doc.save('relatorio_inventario_atual.pdf');
+        }
 
-    function fecharRelatorio() {
-      document.getElementById("relatorio").style.display = "none";
-    }
+        // Gerar relatório de recebidos no mês (PDF com tabela)
+        function gerarRelatorioRecebidosMes() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const mesAtual = new Date().toISOString().slice(0, 7); // YYYY-MM
+            const recebidos = movimentacoes.filter(mov => mov.tipo === 'Entrada' && mov.data.startsWith(mesAtual));
+            doc.text(`Relatório de Recebidos no Mês (${mesAtual})`, 10, 10);
+            const body = recebidos.map(mov => [
+                mov.material,
+                mov.quantidade,
+                mov.data,
+                mov.fornecedor
+            ]);
+            doc.autoTable({
+                head: [['Material', 'Quantidade', 'Data', 'Fornecedor']],
+                body: body,
+                startY: 20
+            });
+            doc.save('relatorio_recebidos_mes.pdf');
+        }
 
-    window.onload = () => {
-      document.getElementById("loginBox").style.display = "block";
-      document.getElementById("conteudoSistema").style.display = "none";
-    };
-  </script>
+        // Gerar relatório de retirados por localidade selecionada (PDF com tabela)
+        function gerarRelatorioRetiradosLocalidade() {
+            const localidade = document.getElementById('select-localidade').value;
+            if (!localidade) {
+                alert('Por favor, selecione uma localidade.');
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const retirados = movimentacoes.filter(mov => mov.tipo === 'Saída' && mov.destino === localidade);
+            doc.text(`Relatório de Retirados para ${localidade}`, 10, 10);
+            const body = retirados.map(mov => [
+                mov.material,
+                mov.quantidade,
+                mov.data,
+                mov.quem
+            ]);
+            doc.autoTable({
+                head: [['Material', 'Quantidade', 'Data', 'Quem Enviou']],
+                body: body,
+                startY: 20
+            });
+            doc.save(`relatorio_retirados_${localidade.replace(/\s+/g, '_')}.pdf`);
+        }
+
+        // Inicializar
+        carregarInventario();
+    </script>
 </body>
 </html>
