@@ -19,7 +19,7 @@
     <div id="login-section" class="container mt-5">
         <h1 class="text-center">Login - Sistema de Gestão de Estoque</h1>
         <div class="card mt-4">
-            <div class="card-header">Entrar ou Criar Conta</div>
+            <div class="card-header">Entrar ou Registrar Conta</div>
             <div class="card-body">
                 <form id="form-login">
                     <div class="mb-3">
@@ -31,7 +31,7 @@
                         <input type="password" class="form-control" id="senha" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Entrar</button>
-                    <button type="button" class="btn btn-secondary" onclick="criarConta()">Criar Conta</button>
+                    <button type="button" class="btn btn-secondary" onclick="registrarConta()">Registrar Conta</button>
                 </form>
             </div>
         </div>
@@ -50,6 +50,9 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="relatorios-tab" data-bs-toggle="tab" data-bs-target="#relatorios" type="button" role="tab" aria-controls="relatorios" aria-selected="false">Relatórios</button>
+                </li>
+                <li class="nav-item" id="admin-tab-li" role="presentation" style="display: none;">
+                    <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-controls="admin" aria-selected="false">Admin</button>
                 </li>
             </ul>
             
@@ -116,7 +119,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label>Quem Está Enviando</label>
-                                        <input type="text" class="form-control" id="quem-enviando" required>
+                                        <input type="text" class="form-control" id="quem-enviando" readonly required>
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-warning mt-3">Distribuir</button>
@@ -169,6 +172,24 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Aba Admin (Apenas para Master) -->
+                <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
+                    <div class="card mt-4">
+                        <div class="card-header">Aprovar Contas Pendentes</div>
+                        <div class="card-body">
+                            <table class="table table-striped" id="tabela-pendentes">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -178,7 +199,8 @@
         // Dados simulados (localStorage)
         let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
         let movimentacoes = JSON.parse(localStorage.getItem('movimentacoes')) || [];
-        let usuarios = JSON.parse(localStorage.getItem('usuarios')) || []; // Array de {usuario, senha}
+        let usuariosAprovados = JSON.parse(localStorage.getItem('usuariosAprovados')) || []; // Array de {usuario, senha, master: boolean}
+        let usuariosPendentes = JSON.parse(localStorage.getItem('usuariosPendentes')) || []; // Array de {usuario, senha}
         let usuarioLogado = localStorage.getItem('usuarioLogado');
 
         // Verificar login ao carregar
@@ -200,20 +222,28 @@
         function mostrarSistema() {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('main-section').style.display = 'block';
+            // Preencher "Quem Está Enviando" com usuário logado
+            document.getElementById('quem-enviando').value = usuarioLogado;
+            // Mostrar aba Admin se for master
+            const user = usuariosAprovados.find(u => u.usuario === usuarioLogado);
+            if (user && user.master) {
+                document.getElementById('admin-tab-li').style.display = 'block';
+                carregarPendentes();
+            }
             carregarInventario();
         }
 
-        // Criar conta
-        function criarConta() {
+        // Registrar conta (pendente)
+        function registrarConta() {
             const usuario = document.getElementById('usuario').value.trim();
             const senha = document.getElementById('senha').value.trim();
             if (usuario && senha) {
-                if (usuarios.find(u => u.usuario === usuario)) {
-                    alert('Usuário já existe!');
+                if (usuariosAprovados.find(u => u.usuario === usuario) || usuariosPendentes.find(u => u.usuario === usuario)) {
+                    alert('Usuário já existe ou está pendente!');
                 } else {
-                    usuarios.push({ usuario, senha });
-                    localStorage.setItem('usuarios', JSON.stringify(usuarios));
-                    alert('Conta criada! Faça login.');
+                    usuariosPendentes.push({ usuario, senha });
+                    localStorage.setItem('usuariosPendentes', JSON.stringify(usuariosPendentes));
+                    alert('Conta registrada! Aguarde aprovação do master.');
                 }
             } else {
                 alert('Preencha usuário e senha.');
@@ -225,12 +255,12 @@
             e.preventDefault();
             const usuario = document.getElementById('usuario').value.trim();
             const senha = document.getElementById('senha').value.trim();
-            const user = usuarios.find(u => u.usuario === usuario && u.senha === senha);
+            const user = usuariosAprovados.find(u => u.usuario === usuario && u.senha === senha);
             if (user) {
                 localStorage.setItem('usuarioLogado', usuario);
                 mostrarSistema();
             } else {
-                alert('Usuário ou senha incorretos!');
+                alert('Usuário ou senha incorretos, ou conta não aprovada!');
             }
         });
 
@@ -238,6 +268,28 @@
         function logout() {
             localStorage.removeItem('usuarioLogado');
             mostrarLogin();
+        }
+
+        // Carregar pendentes (para master)
+        function carregarPendentes() {
+            const tbody = document.querySelector('#tabela-pendentes tbody');
+            tbody.innerHTML = '';
+            usuariosPendentes.forEach((user, index) => {
+                tbody.innerHTML += `<tr>
+                    <td>${user.usuario}</td>
+                    <td><button class="btn btn-success btn-sm" onclick="aprovarConta(${index})">Aprovar</button></td>
+                </tr>`;
+            });
+        }
+
+        // Aprovar conta (master)
+        function aprovarConta(index) {
+            const user = usuariosPendentes.splice(index, 1)[0];
+            usuariosAprovados.push({ usuario: user.usuario, senha: user.senha, master: false });
+            localStorage.setItem('usuariosAprovados', JSON.stringify(usuariosAprovados));
+            localStorage.setItem('usuariosPendentes', JSON.stringify(usuariosPendentes));
+            carregarPendentes();
+            alert('Conta aprovada!');
         }
 
         // Carregar inventário na tabela
@@ -328,67 +380,4 @@
             localStorage.setItem('movimentacoes', JSON.stringify(movimentacoes));
         }
 
-        // Gerar relatório completo de movimentações (PDF com tabela)
-        function gerarRelatorioMovimentacao() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text('Relatório Completo de Movimentações', 10, 10);
-            const body = movimentacoes.map(mov => [
-                mov.tipo,
-                mov.material,
-                mov.quantidade,
-                mov.data,
-                mov.fornecedor || `${mov.destino} (Enviado por: ${mov.quem})`
-            ]);
-            doc.autoTable({
-                head: [['Tipo', 'Material', 'Quantidade', 'Data', 'Detalhes']],
-                body: body,
-                startY: 20
-            });
-            doc.save('relatorio_movimentacoes_completo.pdf');
-        }
-
-        // Gerar relatório de estoque (PDF com tabela)
-        function gerarRelatorioEstoque() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text('Relatório do Inventário Atual', 10, 10);
-            const body = inventario.map(item => [
-                item.material,
-                item.quantidade,
-                item.fornecedor,
-                item.dataRecebimento,
-                item.dataValidade,
-                item.minEstoque
-            ]);
-            doc.autoTable({
-                head: [['Material', 'Quantidade', 'Fornecedor', 'Data Recebimento', 'Data Validade', 'Min. Estoque']],
-                body: body,
-                startY: 20
-            });
-            doc.save('relatorio_inventario_atual.pdf');
-        }
-
-        // Gerar relatório de recebidos no mês (PDF com tabela)
-        function gerarRelatorioRecebidosMes() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const mesAtual = new Date().toISOString().slice(0, 7); // YYYY-MM
-            const recebidos = movimentacoes.filter(mov => mov.tipo === 'Entrada' && mov.data.startsWith(mesAtual));
-            doc.text(`Relatório de Recebidos no Mês (${mesAtual})`, 10, 10);
-            const body = recebidos.map(mov => [
-                mov.material,
-                mov.quantidade,
-                mov.data,
-                mov.fornecedor
-            ]);
-            doc.autoTable({
-                head: [['Material', 'Quantidade', 'Data', 'Fornecedor']],
-                body: body,
-                startY: 20
-            });
-            doc.save('relatorio_recebidos_mes.pdf');
-        }
-
-        // Gerar relatório de retirados por localidade selecionada (PDF com tabela)
-        function gerarRelatorioRet
+        // Gerar relatório
